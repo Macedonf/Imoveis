@@ -1,4 +1,5 @@
 {% extends 'imoveis/base.html' %}
+{% load custom_filters %}
 
 {% block title %}Lista de Aluguéis{% endblock %}
 
@@ -23,7 +24,7 @@
         <td>{{ aluguel.inquilino.nome }}</td>
         <td>{{ aluguel.data_vencimento }}</td>
         <td>{{ aluguel.valor|floatformat:2 }}</td>
-        <td>{{ aluguel.pago}}</td>
+        <td>{{ aluguel.pago|pago_sim_nao }}</td>
         <td>
             <!-- Botão de Editar -->
             <a class="btn btn-warning btn-sm" href="{% url 'editar_aluguel' aluguel.id %}">Editar</a>
