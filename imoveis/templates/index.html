@@ -1,4 +1,4 @@
-{% extends 'imoveis/base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Página Inicial{% endblock %}
 
@@ -26,6 +26,15 @@
                     <h5 class="card-title">Inquilinos</h5>
                     <p class="card-text">Gerencie os inquilinos e acompanhe suas informações e contratos.</p>
                     <a href="{% url 'list_inquilinos' %}" class="btn btn-primary">Ver Inquilinos</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Alugueis</h5>
+                    <p class="card-text">Acesse os alugueis e acompanhe suas informações.</p>
+                    <a href="{% url 'listar_alugueis' %}" class="btn btn-primary">Ver Alugueis</a>
                 </div>
             </div>
         </div>

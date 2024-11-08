@@ -29,6 +29,15 @@ ALLOWED_HOSTS = []
 
 LOGIN_URL = 'login'
 
+#configuração de avariaveis de ambiente para email
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'matheus.joaonf@gmail.com'
+EMAIL_HOST_PASSWORD = 'aixz qseu qsqm jwcw'
+
 
 # Application definition
 

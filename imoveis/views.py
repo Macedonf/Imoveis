@@ -1,21 +1,104 @@
 import csv
-from http.client import responses
-from typing import Annotated
-from django.contrib.admin.templatetags.admin_list import pagination
+import datetime
+from django.template.loader import render_to_string
+from django.utils import timezone
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
-from django.db.models import Q, Sum
-from sqlparse.sql import Values
+from django.db.models import Sum
+from django.utils.html import strip_tags
+
+from gestao_alugueis.utils import enviar_email
 from imoveis.forms import ImovelForm, InquilinoForm, AluguelForm
 from imoveis.models import Imovel, Inquilino, Aluguel
+from imoveis.services.geocode import get_coordinates_from_address
+from imoveis.services.search_address_by_cep import buscar_endereco_por_cep
+
 
 
 # Página inicial
 def index(request):
-    return render(request, 'imoveis/index.html')
+    return render(request, 'index.html')
+
+
+# Adicionar Inquilino
+@login_required
+def adicionar_inquilino(request):
+    if request.method == 'POST':
+        form = InquilinoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('list_inquilinos')
+    else:
+        form = InquilinoForm()
+    return render(request, 'inquilinos/form_inquilino.html', {'form': form, 'title': 'Adicionar Inquilino'})
+
+
+# Editar Inquilino
+@login_required
+def editar_inquilino(request, inquilino_id):
+    inquilino = get_object_or_404(Inquilino, id=inquilino_id)
+    if request.method == 'POST':
+        form = InquilinoForm(request.POST, instance=inquilino)
+        form.save()
+        return redirect('list_inquilinos')
+    else:
+        form = InquilinoForm(instance=inquilino)
+    return render(request, 'inquilinos/form_inquilino.html', {'form': form, 'title': 'Editar Inquilino'})
+
+
+# Listagem de Inquilinos
+@login_required
+def list_inquilinos(request):
+    inquilinos = Inquilino.objects.all()
+    return render(request, 'inquilinos/list_inquilinos.html', {'inquilinos': inquilinos})
+
+
+# Excluir Inquilino
+@login_required
+def excluir_inquilino(request, inquilino_id):
+    inquilino = get_object_or_404(Inquilino, id=inquilino_id)
+    if request.method == 'POST':
+        inquilino.delete()
+        return redirect('list_inquilinos')
+    return render(request, 'inquilinos/excluir_inquilino.html', {'inquilino': inquilino})
+
+
+# Buscar CEP
+@login_required
+def buscar_endereco(request):
+    cep = request.GET.get('cep')
+    if not cep:
+        return JsonResponse({'erro': 'CEP não fornecido.'}, status=400)
+
+    try:
+        dados = buscar_endereco_por_cep(cep)
+        return JsonResponse({
+            'endereco': dados['logradouro'],
+            'bairro': dados['bairro'],
+            'cidade': dados['localidade'],
+            'estado': dados['uf'],
+            'cep': dados['cep'],
+        })
+    except Exception as e:
+        return JsonResponse({'erro': f'Erro: {str(e)}'}, status=500)
+
+
+def detalhar_imovel(request, imovel_id):
+    imovel = get_object_or_404(Imovel, id=imovel_id)
+
+    latitude, longitude, display_name = get_coordinates_from_address(cep=imovel.cep)
+
+    return render(request, 'imoveis/detalhar_imovel.html', {
+        'imovel': imovel,
+        'latitude': latitude,
+        'longitude': longitude,
+        'display_name': display_name
+    })
 
 
 # Listagem de Imóveis
@@ -36,42 +119,9 @@ def list_imoveis(request):
     elif preco_min:
         query = query.filter(preco_aluguel__lte=preco_min)  # Less Than or Equal (Menor ou igual)
     elif preco_max:
-        query = query.filter(preco_aluguel__gte=preco_max)  # Greater THan or Equal (Maior ou igual)
+        query = query.filter(preco_aluguel__gte=preco_max)  # Greater Than or Equal (Maior ou igual)
 
     return render(request, 'imoveis/list_imoveis.html', {'imoveis': query})
-
-
-# Adicionar Inquilino
-@login_required
-def adicionar_inquilino(request):
-    if request.method == 'POST':
-        form = InquilinoForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('list_inquilinos')
-    else:
-        form = InquilinoForm()
-    return render(request, 'imoveis/form_inquilino.html', {'form': form, 'title': 'Adicionar Inquilino'})
-
-
-# Editar Inquilino
-@login_required
-def editar_inquilino(request, inquilino_id):
-    inquilino = get_object_or_404(Inquilino, id=inquilino_id)
-    if request.method == 'POST':
-        form = InquilinoForm(request.POST, instance=inquilino)
-        form.save()
-        return redirect('list_inquilinos')
-    else:
-        form = InquilinoForm(instance=inquilino)
-    return render(request, 'imoveis/form_inquilino.html', {'form': form, 'title': 'Editar Inquilino'})
-
-
-# Listagem de Inquilinos
-@login_required
-def list_inquilinos(request):
-    inquilinos = Inquilino.objects.all()
-    return render(request, 'imoveis/list_inquilinos.html', {'inquilinos': inquilinos})
 
 
 # Adicionar Imóvel
@@ -120,8 +170,8 @@ def user_login(request):
             login(request, user)
             return HttpResponseRedirect(reverse('index'))
         else:
-            return render(request, 'imoveis/login.html', {'error': 'Credenciais inválidas.'})
-    return render(request, 'imoveis/login.html')
+            return render(request, 'login.html', {'error': 'Credenciais inválidas.'})
+    return render(request, 'login.html')
 
 
 # Logout
@@ -133,14 +183,27 @@ def user_logout(request):
 @login_required
 def relatorio_pagamentos(request):
     alugueis = Aluguel.objects.all()
-
     total_recebido = alugueis.filter(pago=True).aggregate(Sum('valor'))['valor__sum'] or 0
     alugueis_pendentes = alugueis.filter(pago=False)
 
-    return render(request, 'imoveis/relatorio_pagamentos.html', {
+    # Notificações de vencimento próximos
+    hoje = datetime.date.today()
+    vencimento_proximo = hoje + datetime.timedelta(days=7)
+    alugueis_a_vencer = alugueis.filter(pago=False, data_vencimento__gt=hoje, data_vencimento__lte=vencimento_proximo)
+    alugueis_vencidos = alugueis.filter(pago=False, data_vencimento__lt=hoje)
+
+    if alugueis_a_vencer.exists():
+        messages.info(request, f"{alugueis_a_vencer.count()} pagamento(s) esta(ão) próximo(s) do vencimento.")
+
+    if alugueis_vencidos.exists():
+        messages.error(request, f"{alugueis_vencidos.count()} pagamento(s) que esta(ão) vencimento(s).")
+
+    return render(request, 'relatorios/relatorio_pagamentos.html', {
         'alugueis': alugueis,
         'total_recebido': total_recebido,
-        'alugueis_pendentes': alugueis_pendentes
+        'alugueis_pendentes': alugueis_pendentes,
+        'alugueis_a_vencer': alugueis_a_vencer,
+        'alugueis_vencidos': alugueis_vencidos
     })
 
 
@@ -220,3 +283,77 @@ def excluir_aluguel(request, aluguel_id):
         return redirect('listar_alugueis')
 
     return render(request, 'alugueis/excluir_aluguel.html', {'aluguel': aluguel})
+
+
+@login_required
+def marcar_como_pago(request, aluguel_id):
+    aluguel = get_object_or_404(Aluguel, id=aluguel_id)
+
+    if not aluguel.pago:
+        aluguel.pago = True
+
+        # Solução para somar 30 dias corridos
+        aluguel.data_vencimento += timezone.timedelta(days=30)
+
+        # Solução para dia fixo de pagamento
+        # data_vencimento = aluguel.data_vencimento
+        # if data_vencimento.month == 12: # Se for dezembro, o próximo mês é janeiro do próximo ano
+        #    nova_data_vencimento = data_vencimento.replace(year=data_vencimento.year + 1, month=1)
+        # else:
+        #    nova_data_vencimento = data_vencimento.replace(month=data_vencimento.month + 1)
+
+        # aluguel.data_vencimento = nova_data_vencimento
+
+        aluguel.save()
+
+        email = aluguel.inquilino.email
+        assunto = 'Confirmação de pagamento recebido'
+        mensagem_html = render_to_string('email/contato_imovel.html', {
+            'titulo_email': 'Contato Sobre Imóvel',
+            'content': f'<p>Olá, {aluguel.inquilino.nome}, confirmamos o recebimento do pagamento de R$ {aluguel.valor} referente ao aluguel do imóvel.</p>'
+        })
+
+        envia_email(email, assunto, mensagem_html)
+
+        messages.success(request, "Pagamento registrado com sucesso.")
+
+    return redirect('listar_alugueis')
+
+
+def contato_imovel(request):
+    try:
+        if request.method == 'POST':
+            nome = request.POST.get('nome')
+            email = request.POST.get('email')
+            telefone = request.POST.get('telefone')
+            mensagem = request.POST.get('mensagem')
+            identificador = request.POST.get('identificador')
+            assunto = f'Interesse sobre no Imóvel - {identificador}'
+            ano_atual = datetime.datetime.now().year
+
+            mensagem_html = render_to_string('email/contato_imovel.html', {
+                'titulo_email': 'Contato Sobre Imóvel',
+                'content':
+                    f'''<p>Olá, o {nome} está interessado no imóvel {identificador}</p>
+                        <p><strong>Telefone:</strong> {telefone}</p>
+                        <p><strong>E-mail:</strong> {email}</p>
+                        <br>
+                        <p><strong>Mensagem do contato:</strong> {mensagem}</p>''',
+                'ano_atual': ano_atual
+            })
+
+            envia_email(email, assunto, mensagem_html)
+
+            return redirect('detalhar_imovel', imovel_id=request.POST.get('imovel_id'))
+    except Exception as e:
+        print(f"Ocorreu um erro ao tentar enviar o email. Erro: {e}")
+
+
+def envia_email(email, assunto, mensagem_html):
+    plain_message = strip_tags(mensagem_html)
+    enviar_email(
+        destinatario=email,
+        assunto=assunto,
+        mensagem=plain_message,
+        mensagem_html=mensagem_html
+    )

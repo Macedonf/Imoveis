@@ -1,0 +1,164 @@
+
+﻿gestao_alugueis/
+|
+|- gestao_alugueis/             # Diretório do projeto principal
+    |- __init__.py              # Definir diretório como modulo
+    |- settings.py              # Configuração do Django para o projeto
+    |- urls.py                  # Mapeamento de URLs para todo o projeto
+    |- wsgi.py                  # Ponto de entrada WSGI para servidores compatíveis
+|
+|- imoveis/                     # Aplicativo 'imoveis' dentro do projeto
+    |- migrations
+        |- __init__.py          # Definir diretório como modulo
+        |- 0001_initial.py      # Arquivo de migrate da estrutura incial do projeto
+    |- templates/               # Templates específicos da aplicação 'imoveis'
+        |- imoveis/
+            |- base.html                     # Template base para todas as págians
+            |- index.html                    # Página inicial
+            |- login.html                    # Página de login
+            |- list_imoveis.html             # Lista de imoveis
+            |- form_imoveis.html             # Adicionar/Editar Imovel
+            |- form_inquilino.html           # Adicionar/Editar Inquilino
+            |- excluir_imoveis.html          # Excluir Imovel
+            |- list_inquilinos.html          # Lista de inquilinos
+            |- relatorio_pagamentos.html     # Relatório dos pagamentos ocorridos e pendentes
+    |
+    |- static/
+        |- imoveis/
+            |- css/
+                |- style.css            # Arquivo CSS customizado
+    |- templatetags/
+        |- custom_filters.py            # Arquivo de filtros customizados
+    |
+    |- admin.py                 # Configurações da administração do Django
+    |- apps.py                  # Configurações da aplicação
+    |- forms.py                 # Formulários da aplicação
+    |- models.py                # Modelos de dados
+    |- tests.py                 # Testes unitários
+    |- urls.py                  # Mapeamento de URLs para a aplicação 'imoveis'
+    |- views.py                 # Views da aplicação 'imoveis'
+|
+|- db.sqlite3                   # Banco de dados SQLite
+|- manage.py                    # Script de gestão do Django
+
+Estrutura do Projeto
+O projeto está organizado com as seguintes funcionalidades principais:
+
+1. Imóveis:
+    - Adição com validação do preço do aluguel, edição e exclusão de imóveis.
+    - Listagem de imóveis, com filtro por cidade, estado e faixa de preço.
+    - Associação ao modelo de inquilino por uma relação ForeinKey.
+    - Integração com viacep para consulta nos correios.
+    - Integração com Maps
+
+2 . Inquilinos:
+    - Adição com validação de email, edição, listagem e exclusão de inquilinos.
+    - Associação a um imóvel específico.
+
+3. Relatório de Pagamentos:
+    - Relatório de pagamentos efetuados e pendentes.
+    - Cálculo do total recebido considerando apenas aluguéis pagos.
+    - A listagem de aluguéis pendentes.
+    - Modal com gráfico de pagamentos
+    - Export do relatório de alugueis
+    - Notificação de pagamentos pendentes nos próximos 7 dias e pagamentos vencidos
+
+4. Autenticação e Autorização:
+    - Sistema de login e logout
+    - Páginas protegidas(@login_required) para evitar o acesso não autorizado.
+    - Usuários logados têm acesso à listagem de inquilinos e relatórios.
+    - Somente usuários autenticados podem ver e interagir com os botões de edição e exclusão.
+
+5 . Aluguel:
+    - Adição, edição, listagem e exclusão de alugueis.
+    - Marcação de aluguel pago com atualização de vencimento para 30 dias
+
+Estrura do projeto (arquivos)
+
+1. Models
+    - Imovel
+    - Inquilino
+    - Aluguel
+
+2. Views
+    - list_imoveis
+    - adicionar_inquilino
+    - editar_inquilino
+    - list_inquilinos
+    - adicionar_imovel
+    - editar_imovel
+    - excluir_imovel
+    - user_login
+    - user_logout
+    - relatorio_pagamentos
+
+3. Forms
+    - ImovelForm
+    - InquilinoForm
+
+4. Templates
+    -base.html
+    -excluir_imovel.html
+    -form_imovel.html
+    -form_inquilino.html
+    -index.html
+    -list_imoveis.html
+    -list_inquilinos.html
+    -login.html
+    -relatorio_pagamentos.html
+
+5. Configurações
+    - Configurações de banco de dados, autenticação e segurança.
+    - Integração com Boostrap e configurações de middleware para suporte a autenticação.
+
+Bibliotecas Usadas
+    - Django
+    - Django ORM
+    - Boostrap
+
+Próximos passos:
+1. Notificação de Vencimento (e-mail)
+    - Próximo da data
+    - Aluguel vencido
+    - Notificação de pagamento recebido
+    - Envio de mensagem para saber sobre o imóvel
+2. Colocar retry no carregamento do mapa
+3. Upload de fotos do imovel
+4. Vitrine de fotos do imovel
+5. Ajustar o relacionamento Inquilino x Imovel x Aluguel
+6. Mudar para o PostgreSQL usando o Supabase
+7. Painel Administrativo
+    - Criar uma dashboard métricas de pagamento
+8. Teste e Documentação:
+    - Escrever testes unitários
+    - Documentar o projeto e suas funcionalidades
+9. Publicar o projeto na nuvem
+
+Próximos passos (opcional):
+- o valor do imovel + 10% + encargos
+- logomarca da imobiliaria
+- autenticação com rede social
+
+
+Atualizar a consulta de CEP para o https://www.gov.br/
+- solicitar o token
+- guardar o token em memoria
+- validar o expired time do token
+- consulta
+
+
+git init                      # criar o repositorio
+git clone                     # copiar/clonar um repositorio
+
+git add <nome_do_arquivo>     # adicionar um arquivo para ser commitado
+git commit                    # commitar(persistir) a versão do(s) arquivo(s)
+git push                      # envia o commit para o repositorio remoto
+git pull                      # trazer uma atualização do repositorio remoto
+
+
+<TIPO_IMOVEL>-<5_DIGITOS>
+CAS-12345: Casa
+APT-54321: Apartamento
+LOJ-11223: Loja
+SAL-74125: Sala
+TER-96352: Terreno

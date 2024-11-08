@@ -5,9 +5,12 @@ from imoveis.models import Imovel, Inquilino, Aluguel
 class ImovelForm(forms.ModelForm):
     class Meta:
         model = Imovel
-        fields = ['endereco', 'cidade', 'estado', 'preco_aluguel', 'descricao']
+        fields = ['tipo_imovel', 'cep', 'endereco', 'bairro', 'cidade', 'estado', 'preco_aluguel', 'descricao']
         widgets = {
+            'tipo_imovel': forms.Select(attrs={'class': 'form-control'}),
+            'cep': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Digite o CEP'}),
             'endereco': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Digite o endereço'}),
+            'bairro': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Digite o bairro'}),
             'cidade': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Digite a cidade'}),
             'estado': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Digite o estado'}),
             'preco_aluguel': forms.NumberInput(
@@ -50,5 +53,5 @@ class AluguelForm(forms.ModelForm):
             'inquilino': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Escolha o inquilino'}),
             'data_vencimento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'valor': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Digite o preço do aluguel'}),
-            'pago': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Escolha o imóvel'}),
+            'pago': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

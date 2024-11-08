@@ -1,4 +1,4 @@
-{% extends 'imoveis/base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}{{ title }}{% endblock %}
 
@@ -6,7 +6,7 @@
 <h1 class="mb-4">{{ title }}</h1>
 <form method="post" class="row g-3">
     {% csrf_token %}
-    
+
     <div class="col-md-6">
         {{ form.nome.label_tag }}
         {{ form.nome }}
@@ -23,7 +23,7 @@
         {{ form.imovel.label_tag }}
         {{ form.imovel }}
     </div>
-    
+
     {% if form.errors %}
         <div class="alert alert-danger">
             <ul>

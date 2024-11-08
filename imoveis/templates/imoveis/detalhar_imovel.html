@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalhes do Imóvel{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+{% endblock %}
+
+{% block content %}
+<h1>Detalhes do Imóvel</h1>
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">{{ imovel.nome }}</h2>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong>Endereço:</strong> {{ imovel.endereco }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Bairro:</strong> {{ imovel.bairro }}</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="col-md-6">
+                    <p><strong>Cidade:</strong> {{ imovel.cidade }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Estado:</strong> {{ imovel.estado }}</p>
+                </div>
+            </div>
+            <div class="mb-4">
+                <h5>Localização no Mapa:</h5>
+                <div id="display_name"></div>
+                <div id="map" style="height: 400px; width: 100%" class="rounded border"></div>
+            </div>
+            <a href="{% url 'list_imoveis' %}" class="btn btn-secondary">Voltar para a Lista de Imóveis</a>
+        </div>
+    </div>
+
+    <div class="col-md-4 mt-5 offset-4 mb-5">
+        <h4>Entre em Contato</h4>
+        <form method="post" action="{% url 'contato_imovel' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="nome" class="form-label">Nome</label>
+                <input type="text" class="form-control" id="nome" name="nome" required>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">E-mail</label>
+                <input type="text" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="telefone" class="form-label">Telefone</label>
+                <input type="text" class="form-control" id="telefone" name="telefone" required>
+            </div>
+            <div class="mb-3">
+                <label for="mensagem" class="form-label">Mensagem</label>
+                <textarea class="form-control" id="mensagem" name="mensagem" rows="4">Tenho interesse no imóvel localizado em {{ imovel.endereco }} com o preço de R$ {{ imovel.preco_aluguel }}</textarea>
+            </div>
+            <input type="hidden" id="identificador" name="identificador" value="{{ imovel.identificador }}" required>
+            <input type="hidden" id="imovel_id" name="imovel_id" value="{{ imovel.id }}" required>
+            <button type="submit" id="btn-enviar-msg" class="btn btn-primary">Enviar Mensagem</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    var map = L.map('map').setView([{{ latitude }}, {{ longitude }}], 13);
+
+    document.getElementById('display_name').innerHTML = "{{ display_name }}";
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© Alugueis Senac'
+    }).addTo(map);
+
+    L.marker([{{ latitude }}, {{ longitude }}]).addTo(map)
+    .bindPopup("Localização")
+    .openPopup();
+</script>
+{% endblock %}
